@@ -159,4 +159,4 @@ logs/
 *.temp
 
 # Config files with sensitive data (uncomment if needed)
-# config.py
+config.py

@@ -22,13 +22,7 @@ pip install -r requirements.txt
 ```
 
 ### 2. Настройка конфигурации
-Скопируйте файл `config_example.py` в `config.py` и отредактируйте:
-
-```bash
-cp config_example.py config.py
-```
-
-Затем отредактируйте `config.py`:
+Отредактируйте файл `config.py`:
 
 ```python
 # Токен бота (получить у @BotFather)
@@ -90,7 +84,6 @@ tg_bot_subs/
 
 4. **Настройте config.py локально:**
    ```bash
-   cp config_example.py config.py
    # Отредактируйте config.py со своими данными
    ```
 
