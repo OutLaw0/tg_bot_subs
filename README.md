@@ -36,7 +36,7 @@ DATABASE_NAME=bot_users.db
 
 > В продакшне (Render/Heroku/Railway) задайте эти переменные в настройках окружения платформы.
 
-**Важно:** Файл `config.py` и `.env` не загружаются в GitHub благодаря `.gitignore`!
+**Важно:** Файл `.env` не загружаются в GitHub благодаря `.gitignore`!
 
 **Как получить токен бота:**
 1. Напишите @BotFather в Telegram
@@ -92,18 +92,18 @@ tg_bot_subs/
    echo ADMIN_ID=ВАШ_TELEGRAM_ID >> .env
    echo DATABASE_NAME=bot_users.db >> .env
    ```
-
-**Важно:** Файл `config.py` не будет загружен в GitHub благодаря `.gitignore`!
-
-## Деплой на Render
+## Деплой на Render (Web Service + Webhook)
 
 1. Создайте новый Web Service на Render и подключите репозиторий
-2. В Settings → Environment добавьте переменные:
-   - `BOT_TOKEN`
-   - `ADMIN_ID`
-   - `DATABASE_NAME` (опционально)
-3. Стартовая команда: `python main.py`
-4. Среда выполнения: Python 3.13
+2. В Settings → Environment добавьте переменные окружения:
+   - `BOT_TOKEN` — токен бота
+   - `ADMIN_ID` — ваш Telegram ID
+   - `DATABASE_NAME` — опционально (по умолчанию `bot_users.db`)
+   - `WEBHOOK_SECRET` — опционально (строка для проверки запросов из Telegram)
+   - `WEBHOOK_BASE_URL` — если `RENDER_EXTERNAL_URL` недоступен, укажите публичный URL вручную
+3. Render автоматически задает `PORT` — наш сервис слушает его и принимает вебхуки
+4. Стартовая команда: `python main.py`
+5. После деплоя проверьте логи: должна быть строка `Webhook установлен: <URL>`
 
 ## Деплой на Railway
 
