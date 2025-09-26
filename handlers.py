@@ -4,10 +4,10 @@
 """
 
 import logging
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Command
-from aiogram.utils.exceptions import BotBlocked, ChatNotFound, UserDeactivated
+from aiogram import Router, F
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.exceptions import TelegramBadRequest
 
 from config import ADMIN_ID
 from database import db
@@ -16,8 +16,12 @@ from database import db
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Создаем роутер
+router = Router()
 
-async def start_command(message: types.Message):
+
+@router.message(Command("start"))
+async def start_command(message: Message):
     """
     Обработчик команды /start
     Регистрирует пользователя в базе данных
@@ -41,6 +45,7 @@ async def start_command(message: types.Message):
                     "🎉 Добро пожаловать!\n\n"
                     "Вы успешно подписались на рассылку.\n"
                     "Используйте /unsubscribe для отписки."
+                    "/help - чтобы посмотреть прочие комманды"
                 )
                 logger.info(f"Новый пользователь {user_id} подписался")
             else:
@@ -55,7 +60,8 @@ async def start_command(message: types.Message):
         )
 
 
-async def unsubscribe_command(message: types.Message):
+@router.message(Command("unsubscribe"))
+async def unsubscribe_command(message: Message):
     """
     Обработчик команды /unsubscribe
     Удаляет пользователя из базы данных
@@ -81,7 +87,8 @@ async def unsubscribe_command(message: types.Message):
         )
 
 
-async def send_command(message: types.Message):
+@router.message(Command("send"))
+async def send_command(message: Message):
     """
     Обработчик команды /send
     Отправляет сообщение всем подписанным пользователям
@@ -123,7 +130,7 @@ async def send_command(message: types.Message):
             try:
                 await message.bot.send_message(user_id_to_send, message_text)
                 successful_sends += 1
-            except (BotBlocked, ChatNotFound, UserDeactivated):
+            except TelegramBadRequest:
                 # Пользователь заблокировал бота или удален
                 failed_sends += 1
                 logger.info(f"Не удалось отправить сообщение пользователю {user_id_to_send}")
@@ -149,7 +156,8 @@ async def send_command(message: types.Message):
         )
 
 
-async def stats_command(message: types.Message):
+@router.message(Command("stats"))
+async def stats_command(message: Message):
     """
     Обработчик команды /stats
     Показывает статистику подписок
@@ -175,7 +183,8 @@ async def stats_command(message: types.Message):
         )
 
 
-async def help_command(message: types.Message):
+@router.message(Command("help"))
+async def help_command(message: Message):
     """
     Обработчик команды /help
     Показывает список доступных команд
@@ -200,7 +209,8 @@ async def help_command(message: types.Message):
     await message.answer(help_text)
 
 
-async def handle_unknown_message(message: types.Message):
+@router.message()
+async def handle_unknown_message(message: Message):
     """
     Обработчик неизвестных сообщений
     """

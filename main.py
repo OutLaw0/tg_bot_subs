@@ -6,17 +6,10 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN
-from handlers import (
-    start_command,
-    unsubscribe_command,
-    send_command,
-    stats_command,
-    help_command,
-    handle_unknown_message
-)
+from handlers import router
 
 # Настройка логирования
 logging.basicConfig(
@@ -24,24 +17,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-
-async def register_handlers(dp: Dispatcher):
-    """
-    Регистрация обработчиков команд
-    
-    Args:
-        dp (Dispatcher): Диспетчер aiogram
-    """
-    # Регистрируем обработчики команд
-    dp.register_message_handler(start_command, commands=['start'])
-    dp.register_message_handler(unsubscribe_command, commands=['unsubscribe'])
-    dp.register_message_handler(send_command, commands=['send'])
-    dp.register_message_handler(stats_command, commands=['stats'])
-    dp.register_message_handler(help_command, commands=['help'])
-    
-    # Обработчик для всех остальных сообщений
-    dp.register_message_handler(handle_unknown_message, content_types=['text'])
 
 
 async def main():
@@ -56,11 +31,10 @@ async def main():
         
         # Создаем экземпляры бота и диспетчера
         bot = Bot(token=BOT_TOKEN)
-        storage = MemoryStorage()
-        dp = Dispatcher(bot, storage=storage)
+        dp = Dispatcher(storage=MemoryStorage())
         
-        # Регистрируем обработчики
-        await register_handlers(dp)
+        # Подключаем роутер с обработчиками
+        dp.include_router(router)
         
         # Получаем информацию о боте
         bot_info = await bot.get_me()
@@ -68,7 +42,7 @@ async def main():
         
         # Запускаем бота
         logger.info("🚀 Бот готов к работе...")
-        await dp.start_polling()
+        await dp.start_polling(bot)
         
     except Exception as e:
         logger.error(f"❌ Ошибка при запуске бота: {e}")
