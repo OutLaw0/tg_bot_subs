@@ -9,6 +9,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from aiohttp import web
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from config import BOT_TOKEN, PORT, WEBHOOK_BASE_URL, WEBHOOK_PATH, WEBHOOK_SECRET
 from handlers import router
 
@@ -52,22 +53,15 @@ async def main():
             )
             logger.info(f"🔗 Webhook установлен: {webhook_url}")
 
-            # Создаем aiohttp-приложение
+            # Создаем aiohttp-приложение и регистрируем обработчик aiogram
             app = web.Application()
-
-            # Регистратор апдейтов от Telegram
-            async def handle_webhook(request: web.Request) -> web.Response:
-                # Проверяем секрет при наличии
-                if WEBHOOK_SECRET:
-                    if request.headers.get("X-Telegram-Bot-Api-Secret-Token") != WEBHOOK_SECRET:
-                        return web.Response(status=403)
-
-                data = await request.json()
-                update = bot.session.json_loads(data)
-                await dp.feed_update(bot, update)
-                return web.Response(text="ok")
-
-            app.router.add_post(WEBHOOK_PATH, handle_webhook)
+            request_handler = SimpleRequestHandler(
+                dispatcher=dp,
+                bot=bot,
+                secret_token=WEBHOOK_SECRET or None,
+            )
+            request_handler.register(app, path=WEBHOOK_PATH)
+            setup_application(app, dp, bot=bot)
 
             # health-check endpoint для Render
             async def health(_: web.Request) -> web.Response:
