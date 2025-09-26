@@ -23,10 +23,11 @@ async def main():
     """
     Основная функция запуска бота
     """
+    bot = None
     try:
         # Проверяем наличие токена
-        if BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-            logger.error("❌ Токен бота не установлен! Укажите токен в config.py")
+        if not BOT_TOKEN:
+            logger.error("❌ BOT_TOKEN не задан. Укажите токен в переменной окружения или .env")
             return
         
         # Создаем экземпляры бота и диспетчера
@@ -47,8 +48,9 @@ async def main():
     except Exception as e:
         logger.error(f"❌ Ошибка при запуске бота: {e}")
     finally:
-        # Закрываем сессию бота
-        await bot.session.close()
+        # Закрываем сессию бота, если он был создан
+        if bot is not None:
+            await bot.session.close()
 
 
 if __name__ == '__main__':

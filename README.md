@@ -21,18 +21,22 @@
 pip install -r requirements.txt
 ```
 
-### 2. Настройка конфигурации
-Отредактируйте файл `config.py`:
+### 2. Настройка конфигурации и переменных окружения
+Укажите секреты через переменные окружения (локально можно использовать `.env`).
 
-```python
-# Токен бота (получить у @BotFather)
-BOT_TOKEN = "ВАШ_ТОКЕН_БОТА"
+Создайте файл `.env` рядом с `main.py`:
 
-# ID администратора (ваш Telegram ID)
-ADMIN_ID = ВАШ_TELEGRAM_ID
+```env
+BOT_TOKEN=ВАШ_ТОКЕН_БОТА
+ADMIN_ID=ВАШ_TELEGRAM_ID
+DATABASE_NAME=bot_users.db
 ```
 
-**Важно:** Файл `config.py` не загружается в GitHub из соображений безопасности!
+Локальный запуск автоматически подхватит `.env` (в коде используется `python-dotenv`).
+
+> В продакшне (Render/Heroku/Railway) задайте эти переменные в настройках окружения платформы.
+
+**Важно:** Файл `config.py` и `.env` не загружаются в GitHub благодаря `.gitignore`!
 
 **Как получить токен бота:**
 1. Напишите @BotFather в Telegram
@@ -82,12 +86,24 @@ tg_bot_subs/
    git push -u origin main
    ```
 
-4. **Настройте config.py локально:**
+4. **Настройте переменные окружения локально (.env):**
    ```bash
-   # Отредактируйте config.py со своими данными
+   echo BOT_TOKEN=ВАШ_ТОКЕН_БОТА > .env
+   echo ADMIN_ID=ВАШ_TELEGRAM_ID >> .env
+   echo DATABASE_NAME=bot_users.db >> .env
    ```
 
 **Важно:** Файл `config.py` не будет загружен в GitHub благодаря `.gitignore`!
+
+## Деплой на Render
+
+1. Создайте новый Web Service на Render и подключите репозиторий
+2. В Settings → Environment добавьте переменные:
+   - `BOT_TOKEN`
+   - `ADMIN_ID`
+   - `DATABASE_NAME` (опционально)
+3. Стартовая команда: `python main.py`
+4. Среда выполнения: Python 3.13
 
 ## Деплой на Railway
 
