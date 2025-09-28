@@ -37,6 +37,10 @@ ADMIN_ID = _get_admin_id()
 # Название файла базы данных (SQLite)
 DATABASE_NAME = os.getenv("DATABASE_NAME", "bot_users.db").strip() or "bot_users.db"
 
+# URL для подключения к базе данных PostgreSQL
+# На сервере Render эта переменная будет установлена в настройках сервиса
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 # Порт для веб-сервера (Render/Heroku предоставляет переменную PORT)
 PORT = int(os.getenv("PORT", "8000"))
 

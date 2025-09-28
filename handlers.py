@@ -4,13 +4,13 @@
 """
 
 import logging
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.exceptions import TelegramBadRequest
 
 from config import ADMIN_ID
-from database import db
+from database import db  # db теперь асинхронный
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -33,14 +33,14 @@ async def start_command(message: Message):
     
     try:
         # Проверяем, подписан ли пользователь
-        if db.is_user_subscribed(user_id):
+        if await db.is_user_subscribed(user_id):
             await message.answer(
                 "✅ Вы уже подписаны на рассылку!\n\n"
                 "Используйте /unsubscribe для отписки."
             )
         else:
             # Добавляем пользователя в базу данных
-            if db.add_user(user_id, username, first_name, last_name):
+            if await db.add_user(user_id, username, first_name, last_name):
                 await message.answer(
                     "🎉 Добро пожаловать!\n\n"
                     "Вы успешно подписались на рассылку.\n"
@@ -69,7 +69,7 @@ async def unsubscribe_command(message: Message):
     user_id = message.from_user.id
     
     try:
-        if db.remove_user(user_id):
+        if await db.remove_user(user_id):
             await message.answer(
                 "👋 Вы отписались от рассылки.\n\n"
                 "Используйте /start для повторной подписки."
@@ -94,28 +94,24 @@ async def send_command(message: Message):
     Отправляет сообщение всем подписанным пользователям
     Доступно только администратору
     """
-    user_id = message.from_user.id
-    
     # Проверяем права администратора
-    if user_id != ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         await message.answer("❌ У вас нет прав для выполнения этой команды.")
         return
     
     # Извлекаем текст сообщения
-    command_text = message.text
-    if len(command_text.split()) < 2:
+    if not message.text or len(message.text.split()) < 2:
         await message.answer(
             "📝 Использование: /send <текст сообщения>\n\n"
             "Пример: /send Привет всем! Это тестовая рассылка."
         )
         return
     
-    # Получаем текст сообщения (все после /send)
-    message_text = command_text.split(' ', 1)[1]
+    message_text = message.text.split(' ', 1)[1]
     
     try:
         # Получаем список всех пользователей
-        users = db.get_all_users()
+        users = await db.get_all_users()
         if not users:
             await message.answer("📭 Нет подписанных пользователей для рассылки.")
             return
@@ -123,17 +119,18 @@ async def send_command(message: Message):
         # Отправляем сообщение каждому пользователю
         successful_sends = 0
         failed_sends = 0
+        total_users = len(users)
         
-        await message.answer(f"📤 Начинаю рассылку для {len(users)} пользователей...")
+        await message.answer(f"📤 Начинаю рассылку для {total_users} пользователей...")
         
         for user_id_to_send in users:
             try:
                 await message.bot.send_message(user_id_to_send, message_text)
                 successful_sends += 1
-            except TelegramBadRequest:
-                # Пользователь заблокировал бота или удален
+            except TelegramBadRequest as e:
+                # Пользователь заблокировал бота или чат не найден
                 failed_sends += 1
-                logger.info(f"Не удалось отправить сообщение пользователю {user_id_to_send}")
+                logger.warning(f"Не удалось отправить сообщение пользователю {user_id_to_send}: {e}")
             except Exception as e:
                 failed_sends += 1
                 logger.error(f"Ошибка при отправке сообщения пользователю {user_id_to_send}: {e}")
@@ -143,7 +140,7 @@ async def send_command(message: Message):
             f"📊 Рассылка завершена!\n\n"
             f"✅ Успешно отправлено: {successful_sends}\n"
             f"❌ Не удалось отправить: {failed_sends}\n"
-            f"📝 Всего пользователей: {len(users)}"
+            f"📝 Всего пользователей: {total_users}"
         )
         
         await message.answer(report)
@@ -163,15 +160,13 @@ async def stats_command(message: Message):
     Показывает статистику подписок
     Доступно только администратору
     """
-    user_id = message.from_user.id
-    
     # Проверяем права администратора
-    if user_id != ADMIN_ID:
+    if message.from_user.id != ADMIN_ID:
         await message.answer("❌ У вас нет прав для выполнения этой команды.")
         return
     
     try:
-        users_count = db.get_users_count()
+        users_count = await db.get_users_count()
         await message.answer(
             f"📊 Статистика бота:\n\n"
             f"👥 Всего подписчиков: {users_count}"
@@ -183,14 +178,15 @@ async def stats_command(message: Message):
         )
 
 
+# Команды /help и обработчик неизвестных команд остаются без изменений,
+# так как они не взаимодействуют с базой данных.
 @router.message(Command("help"))
 async def help_command(message: Message):
     """
     Обработчик команды /help
     Показывает список доступных команд
     """
-    user_id = message.from_user.id
-    is_admin = user_id == ADMIN_ID
+    is_admin = message.from_user.id == ADMIN_ID
     
     help_text = (
         "🤖 Список команд:\n\n"

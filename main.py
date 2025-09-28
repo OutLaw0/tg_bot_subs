@@ -12,6 +12,7 @@ from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from config import BOT_TOKEN, PORT, WEBHOOK_BASE_URL, WEBHOOK_PATH, WEBHOOK_SECRET
 from handlers import router
+from database import db
 
 # Настройка логирования
 logging.basicConfig(
@@ -25,6 +26,9 @@ async def main():
     """
     Основная функция запуска бота
     """
+    # Инициализируем подключение к базе данных
+    await db.connect()
+
     bot = None
     try:
         # Проверяем наличие токена
@@ -88,6 +92,7 @@ async def main():
         # Закрываем сессию бота, если он был создан
         if bot is not None:
             await bot.session.close()
+            await db.close()
 
 
 if __name__ == '__main__':
