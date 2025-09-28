@@ -1,7 +1,7 @@
 # Зависимости для Telegram-бота
 aiogram==3.13.1
 aiosqlite==0.20.0
-python-dotenv==...
+python-dotenv==1.1.1
 asyncpg==0.30.0
 
 # Дополнительные зависимости для стабильной работы
